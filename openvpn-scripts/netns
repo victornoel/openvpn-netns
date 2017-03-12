@@ -139,7 +139,7 @@ case "$script_type" in
         fi
 
         # move TUN/TAP device to the network namespace
-        ip link set  dev "$dev"  up  netns "$NETNS"  mtu "$tun_mtu"
+        ip link set dev "$dev" up netns "$NETNS" mtu "$tun_mtu"
 
         # set device address
         netmask4="${ifconfig_netmask:-30}"
@@ -203,7 +203,7 @@ case "$script_type" in
                 eval mtr=\"\$route_metric_$i\"
                 [ -n "$net" ]
             do
-                ip -4 route add  "$net/$mask"  via "$gw"  ${mtr:+metric "$mtr"}
+                ip -4 route add "$net/$mask" via "$gw" ${mtr:+metric "$mtr"}
                 i=$(( i + 1 ))
             done
 
@@ -218,12 +218,16 @@ case "$script_type" in
                 eval gw=\"\$route_ipv6_gateway_$i\"
                 [ -n "$net" ]
             do
-                ip -6 route add  "$net"  via "$gw"
+                ip -6 route add "$net" via "$gw"
                 i=$(( i + 1 ))
             done
 
             if [ -n "$route_vpn_gateway" ]; then
-                ip -4 route add  default  via "$route_vpn_gateway"
+                ip -4 route add default via "$route_vpn_gateway"
+            fi
+
+            if [ -n "$ifconfig_ipv6_remote" ]; then
+                ip -6 route add default via "$ifconfig_ipv6_remote"
             fi
 EOF
         ;;
