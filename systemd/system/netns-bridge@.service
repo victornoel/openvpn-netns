@@ -11,4 +11,7 @@ ExecStart=/bin/ip link add mv.${INTERFACE} link ${INTERFACE} type macvlan mode b
 ExecStart=/bin/ip link set mv.${INTERFACE} netns %I
 ExecStart=/bin/ip netns exec %I ip link set dev mv.${INTERFACE} up
 ExecStart=/bin/ip netns exec %I ip addr add ${ADDRESS} dev mv.${INTERFACE}
+ExecStop=/bin/ip netns exec %I ip link set mv.${INTERFACE} netns 1
+ExecStop=/bin/ip link delete mv.${INTERFACE}
+
 RemainAfterExit=yes
