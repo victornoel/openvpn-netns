@@ -18,9 +18,11 @@ in that case!!!) if desired.
 Installing
 ----------
 
-    sudo ln -s "$PWD"/systemd/system/netns@.service /etc/systemd/system/netns@.service
-    sudo ln -s "$PWD"/systemd/system/netns-bridge@.service /etc/systemd/system/netns-bridge@.service
-    sudo ln -s "$PWD"/openvpn/netns /etc/openvpn/netns
+```sh
+sudo ln -s "$PWD"/systemd/system/netns@.service /etc/systemd/system/netns@.service
+sudo ln -s "$PWD"/systemd/system/netns-bridge@.service /etc/systemd/system/netns-bridge@.service
+sudo ln -s "$PWD"/openvpn/netns /etc/openvpn/netns
+```
 
 Then see the `example` folder for using it, all of the subfolders and files are
 meant to be put under `/etc`.
@@ -31,7 +33,9 @@ Configuration
 In Debian, an OpenVPN tunnel configured in the file `/etc/openvpn/foovpn.conf`
 is started using:
 
-    sudo systemctl start openvpn@foovpn.service
+```
+sudo systemctl start openvpn@foovpn.service
+```
 
 To setup such a tunnel inside its own namespace (named `foovpn`, based
 on the openvpn configuration filename):
@@ -39,19 +43,23 @@ on the openvpn configuration filename):
 1. Add the following into the drop-in configuration file
 `/etc/systemd/system/openvpn@foovpn.service.d/netns.conf`:
 
-    [Unit]
-    Requires=netns@foovpn.service
-    After=netns@foovpn.service
+```
+[Unit]
+Requires=netns@foovpn.service
+After=netns@foovpn.service
+```
 
 2. Modify `/etc/openvpn/foovpn.conf` to add the following:
 
-    # ensure there is no up/down for the openvpn resolvconf script
-    script-security 2
-    route-noexec
-    ifconfig-noexec
-    up /etc/openvpn/netns
-    route-up /etc/openvpn/netns
-    down /etc/openvpn/netns
+```
+# ensure there is no up/down for the openvpn resolvconf script
+script-security 2
+route-noexec
+ifconfig-noexec
+up /etc/openvpn/netns
+route-up /etc/openvpn/netns
+down /etc/openvpn/netns
+```
 
 Normally, DNS settings received from OpenVPN server are used inside
 the namespace. To override them, create the file
@@ -63,7 +71,9 @@ connection is terminated.
 
 Then to run a command inside the foovpn network namespace, use:
 
-    sudo ip netns exec foovpn /usr/bin/command...
+```
+sudo ip netns exec foovpn /usr/bin/command...
+```
 
 To setup a systemd service (e.g., foo.service) to be run inside the `foovpn`
 network namespace:
@@ -71,20 +81,24 @@ network namespace:
 1. Add the following into the drop-in configuration file
 `/etc/systemd/system/foo.service.d/netns.conf`:
 
-    [Unit]
-    Requires=netns@foovpn.service openvpn@foovpn.service
-    After=netns@foovpn.service openvpn@foovpn.servic
+```
+[Unit]
+Requires=netns@foovpn.service openvpn@foovpn.service
+After=netns@foovpn.service openvpn@foovpn.servic
+```
 
 2. Modify the `foo.service` file (put it in `/etc/systemd/system` if it is
 coming from a Debian package) to have the following:
 
-    [Service]
-    # Run as root, user/group is setup in the ExecStart
-    User=root
-    # this needs to be wrapped in netns exec and runuser to work
-    ExecStart=/bin/ip netns exec foovpn runuser -g group -u user -- /usr/bin/DAEMON --DAEMON-ARGUMENTS
-    # Ensure it will not restart too fast for the vpn to be fully setup if needed
-    RestartSec=10s
+```
+[Service]
+# Run as root, user/group is setup in the ExecStart
+User=root
+# this needs to be wrapped in netns exec and runuser to work
+ExecStart=/bin/ip netns exec foovpn runuser -g group -u user -- /usr/bin/DAEMON --DAEMON-ARGUMENTS
+# Ensure it will not restart too fast for the vpn to be fully setup if needed
+RestartSec=10s
+```
 
 To setup such a systemd service but with an extra interface bridged to one of
 the existing interface of the host system (useful if you need the service
@@ -93,15 +107,19 @@ to listen to a local interface on top of using the openvpn network):
 1. Modify the drop-in configuration file
 `/etc/systemd/system/foo.service.d/netns.conf` to be as following instead:
 
-    [Unit]
-    Requires=netns@foovpn.service netns-bridge@foovpn.service openvpn@foovpn.service
-    After=netns@foovpn.service netns-bridge@foovpn.service openvpn@foovpn.service
+```
+[Unit]
+Requires=netns@foovpn.service netns-bridge@foovpn.service openvpn@foovpn.service
+After=netns@foovpn.service netns-bridge@foovpn.service openvpn@foovpn.service
+```
 
 2. Add a configuration file /etc/netns/foovpn/bridge.env containing the
 followin:
 
-    INTERFACE=eth0
-    ADDRESS=192.168.0.50/24
+```sh
+INTERFACE=eth0
+ADDRESS=192.168.0.50/24
+```
 
 It will setup an interface named `mv.eth0` (`mv` is for `macvlan`) inside
 the namespace with the address `192.168.0.50/24`. Note that it would make
