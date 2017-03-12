@@ -1,0 +1,14 @@
+[Unit]
+Description=Bridge for network namespace %I
+Requires=netns@%i.service
+After=netns@%i.service
+
+[Service]
+# there could be some binding errors from netns in the logs but it's ok
+EnvironmentFile=/etc/netns/%I/bridge.env
+Type=oneshot
+ExecStart=/bin/ip link add mv.${INTERFACE} link ${INTERFACE} type macvlan mode bridge
+ExecStart=/bin/ip link set mv.${INTERFACE} netns %I
+ExecStart=/bin/ip netns exec %I ip link set dev mv.${INTERFACE} up
+ExecStart=/bin/ip netns exec %I ip addr add ${ADDRESS} dev mv.${INTERFACE}
+RemainAfterExit=yes
