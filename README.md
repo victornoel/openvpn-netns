@@ -34,19 +34,22 @@ In Debian, an OpenVPN tunnel configured in the file `/etc/openvpn/foovpn.conf`
 is started using:
 
 ```
-sudo systemctl start openvpn@foovpn.service
+sudo systemctl start openvpn-client@foovpn.service
 ```
 
 To setup such a tunnel inside its own namespace (named `foovpn`, based
 on the openvpn configuration filename):
 
 1. Add the following into the drop-in configuration file
-`/etc/systemd/system/openvpn@foovpn.service.d/netns.conf`:
+`/etc/systemd/system/openvpn-client@foovpn.service.d/netns.conf`:
 
 ```
 [Unit]
 Requires=netns@foovpn.service
 After=netns@foovpn.service
+
+[Service]
+CapabilityBoundingSet=CAP_SYS_ADMIN
 ```
 
 2. Modify `/etc/openvpn/foovpn.conf` to add the following:
@@ -83,8 +86,9 @@ network namespace:
 
 ```
 [Unit]
-Requires=netns@foovpn.service openvpn@foovpn.service
-After=netns@foovpn.service openvpn@foovpn.servic
+Requires=netns@foovpn.service openvpn-client@foovpn.service
+After=netns@foovpn.service openvpn-client@foovpn.service
+
 ```
 
 2. Modify the `foo.service` file (put it in `/etc/systemd/system` if it is
@@ -96,8 +100,6 @@ coming from a Debian package) to have the following:
 User=root
 # this needs to be wrapped in netns exec and runuser to work
 ExecStart=/bin/ip netns exec foovpn runuser -g group -u user -- /usr/bin/DAEMON --DAEMON-ARGUMENTS
-# Ensure it will not restart too fast for the vpn to be fully setup if needed
-RestartSec=10s
 ```
 
 To setup such a systemd service but with an extra interface bridged to one of
@@ -109,12 +111,12 @@ to listen to a local interface on top of using the openvpn network):
 
 ```
 [Unit]
-Requires=netns@foovpn.service netns-bridge@foovpn.service openvpn@foovpn.service
-After=netns@foovpn.service netns-bridge@foovpn.service openvpn@foovpn.service
+Requires=netns@foovpn.service netns-bridge@foovpn.service openvpn-client@foovpn.service
+After=netns@foovpn.service netns-bridge@foovpn.service openvpn-client@foovpn.service
 ```
 
 2. Add a configuration file /etc/netns/foovpn/bridge.env containing the
-followin:
+following:
 
 ```sh
 INTERFACE=eth0
